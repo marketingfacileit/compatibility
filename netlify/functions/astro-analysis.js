@@ -63,13 +63,22 @@ Istruzioni:
     });
 
     const data = await response.json();
+
+    if (!response.ok || data.type === "error") {
+      const detail = data.error ? `${data.error.type}: ${data.error.message}` : `HTTP ${response.status}`;
+      return {
+        statusCode: 502,
+        body: JSON.stringify({ error: `Errore da Anthropic API — ${detail}` }),
+      };
+    }
+
     const text = (data.content || [])
       .map((block) => block.text || "")
       .join("\n")
       .trim();
 
     if (!text) {
-      return { statusCode: 502, body: JSON.stringify({ error: "Risposta vuota dall'API" }) };
+      return { statusCode: 502, body: JSON.stringify({ error: "Risposta vuota dall'API (nessun blocco di testo nel content)" }) };
     }
 
     return {
